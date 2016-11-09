@@ -81,12 +81,10 @@
 		var slideContent = document.getElementsByClassName("slide-content");//滑块内容容器
 		var slideItems = document.getElementsByClassName("slide-item");//滑块句柄
 		var slideLength = slideItems.length;//滑块的数量
-		slideContent[0].style.width = slideLength*100+"%";
 	//	var slideWidth = slideItems[activeIndex-1].offsetWidth;//容器宽度
 		var slidePager = document.getElementsByClassName("slide-pager");//底部的圆点
 		createCircleBottom();//创建底部圆点
 		var spanCircles = document.getElementsByClassName("spanCircle");
-		
 	    var supportTouch = 'ontouchstart' in window;
 	    // 常量
         var TOUCH_START = supportTouch ? 'touchstart' : 'mousedown';
@@ -96,22 +94,92 @@
 	    init(activeIndex);//activeIndex:最开始显示的滑块
 		//设置滑块的 宽度 和 初始位置
 		function init(index,anim){
+		  anim && removeAnimation();
+		  var a = [activeIndex,parseInt(index)];
+		  anim && addAnimation(a);
+		  slideWidth = slideContrainer[0].offsetWidth;//容器宽度
+		  slideContent[0].style.width = slideLength*100+"%";
 		  slideItems[index].style.width = slideWidth + "px";
-          slideItems[index].style.transform = "translate3d(0,0,0)";
 	      slideItems[index].style.left = "-"+index*slideWidth+"px";
-	      for(var i=0;i<slideLength;i++){
-		    if(i!=index){
-		      slideItems[i].style.width = slideWidth + "px";
+		  slideItems[index].style.transform = "translate3d(0,0,0)";
+		  if(index == 0){
+		    slideItems[slideLength-1].style.width = slideWidth + "px";
+			slideItems[slideLength-1].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+			slideItems[slideLength-1].style.left = "-"+(slideLength-1)*slideWidth+"px";
+			for(var i=1;i<slideLength-1;i++){
+			  slideItems[i].style.width = slideWidth + "px";
 		      slideItems[i].style.left = "-"+i*slideWidth+"px";
-		      if(i>index){
-		        slideItems[i].style.transform = "translate3d("+slideWidth+"px,0,0)";
-		      }else{
-		        slideItems[i].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+		      slideItems[i].style.transform = "translate3d("+slideWidth+"px,0,0)";
+		    }
+		  }else if(index == slideLength-1){
+		    slideItems[0].style.width = slideWidth + "px";
+			slideItems[0].style.left = "-"+0*slideWidth+"px";
+		    slideItems[0].style.transform = "translate3d("+slideWidth+"px,0,0)";
+			for(var i=1;i<slideLength-1;i++){
+			  slideItems[i].style.width = slideWidth + "px";
+		      slideItems[i].style.left = "-"+i*slideWidth+"px";
+		      slideItems[i].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+		    }
+		  }else{
+		    for(var i=0;i<slideLength;i++){
+		      if(i!=index){
+		        slideItems[i].style.width = slideWidth + "px";
+		        slideItems[i].style.left = "-"+i*slideWidth+"px";
+		        if(i>index){
+		          slideItems[i].style.transform = "translate3d("+slideWidth+"px,0,0)";
+		        }else{
+		          slideItems[i].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+		        }
 		      }
 		    }
 		  }
-		  anim && addAnimation();
 		  slideItems[index].addEventListener(TOUCH_START,mouseDown,false);
+		  activeIndex = parseInt(index);
+		  actionBgCircleBottom();//底部圆点背景色的相关操作
+		}
+		function solid(index,pre){
+		  var a = [];
+		  slideItems[index].style.transform = "translate3d(0,0,0)";
+		  a.push(index);
+		  if(index == 0){
+			slideItems[slideLength-1].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+			for(var i=1;i<slideLength-1;i++){
+			  slideItems[i].style.transform = "translate3d("+slideWidth+"px,0,0)";
+			}
+			if(pre || pre == 0){
+			  a.push(pre);
+			}else{
+			  a.push(slideLength-1);
+			  a.push(index+1);
+			}
+		  }else if(index == slideLength-1){
+		    slideItems[0].style.transform = "translate3d("+slideWidth+"px,0,0)";
+			slideItems[index-1].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+			for(var i=1;i<slideLength-1;i++){
+			  slideItems[i].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+			}
+			if(pre || pre == 0){
+			  a.push(pre);
+			}else{
+			  a.push(0);
+			  a.push(index-1);
+			}
+		  }else{
+			for(var i=0;i<slideLength;i++){
+			  if(i>index){
+		        slideItems[i].style.transform = "translate3d("+slideWidth+"px,0,0)";
+		      }else if(i<index){
+		        slideItems[i].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+		      }
+			}
+			if(pre || pre == 0){
+			  a.push(pre);
+			}else{
+			  a.push(index-1);
+			  a.push(index+1);
+			}
+		  }
+		  addAnimation(a);
 		  activeIndex = parseInt(index);
 		  actionBgCircleBottom();//底部圆点背景色的相关操作
 		}
@@ -129,7 +197,8 @@
 		    stX = e.clientX;
 		  } 
 		  activeTarget.addEventListener(TOUCH_MOVE,mouseMove,false);
-		  activeTarget.addEventListener(TOUCH_END,mouseUp,false);
+		  document.addEventListener(TOUCH_END,mouseUp,false);
+		  //activeTarget.addEventListener(TOUCH_END,mouseUp,false);
 		}
 		var moveX = null;//滑动距离
 		function mouseMove(e){
@@ -146,62 +215,59 @@
 		  if(activeIndex>=1){
 		    var mX = -slideWidth+moveX;
 		    slideItems[activeIndex-1].style.transform = "translate3d("+mX+"px,0,0)";
+		  }else if(activeIndex==0){
+		    var mX = -slideWidth+moveX;
+		    slideItems[slideLength-1].style.transform = "translate3d("+mX+"px,0,0)";
 		  }
 		  if(activeIndex<slideLength-1){
 		    var mX = slideWidth+moveX;
 		    slideItems[activeIndex+1].style.transform = "translate3d("+mX+"px,0,0)";
+		  }else if(activeIndex==slideLength-1){
+		    var mX = slideWidth+moveX;
+		    slideItems[0].style.transform = "translate3d("+mX+"px,0,0)";
 		  }
 		}
 		function mouseUp(e){
-		  addAnimation();
+		  if(!activeTarget){
+		    return;
+		  }
 		  activeTarget.removeEventListener(TOUCH_START,mouseDown,false);
 		  activeTarget.removeEventListener(TOUCH_MOVE,mouseMove,false);
-		  if(activeIndex>=1 && activeIndex<slideLength-1){
+		  if(activeIndex >= 1 && activeIndex < slideLength-1){
 		    if(moveX >= slideWidth/3){
-			  slideItems[activeIndex].style.transform = "translate3d("+slideWidth+"px,0,0)";
-			  slideItems[activeIndex-1].style.transform = "translate3d("+0+"px,0,0)";
-			  slideItems[activeIndex+1].style.transform = "translate3d("+slideWidth+"px,0,0)";
-			  activeIndex--;
+			  solid(activeIndex-1,activeIndex);
 		    }else if(moveX <= -slideWidth/3){
-			  slideItems[activeIndex].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
-			  slideItems[activeIndex-1].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
-			  slideItems[activeIndex+1].style.transform = "translate3d("+0+"px,0,0)";
-			  activeIndex++;
+			  solid(activeIndex+1,activeIndex);
 			}else{
-			  slideItems[activeIndex].style.transform = "translate3d("+0+"px,0,0)";
-			  slideItems[activeIndex-1].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
-			  slideItems[activeIndex+1].style.transform = "translate3d("+slideWidth+"px,0,0)";
+			  solid(activeIndex);
 			}
 		  }else if(activeIndex==0){
 		    if(moveX <= -slideWidth/3){
-			  slideItems[activeIndex].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
-			  slideItems[activeIndex+1].style.transform = "translate3d("+0+"px,0,0)";
-			  activeIndex++;
+			  solid(activeIndex+1,activeIndex);
+			}else if(moveX >= slideWidth/3){
+			  solid(slideLength-1,0);
 			}else{
-		      slideItems[activeIndex].style.transform = "translate3d("+0+"px,0,0)";
-			  slideItems[activeIndex+1].style.transform = "translate3d("+slideWidth+"px,0,0)";
+			  solid(activeIndex);
 		    }
 		  }else{
 		    if(moveX > slideWidth/3){
-			  slideItems[activeIndex].style.transform = "translate3d("+slideWidth+"px,0,0)";
-			  slideItems[activeIndex-1].style.transform = "translate3d(-"+0+"px,0,0)";
-			  activeIndex--;
+			  solid(activeIndex-1,activeIndex);
+			}else if(moveX < -slideWidth/3){
+			  solid(0,slideLength-1);
 			}else{
-		      slideItems[activeIndex].style.transform = "translate3d(-"+0+"px,0,0)";
-			  slideItems[activeIndex-1].style.transform = "translate3d(-"+slideWidth+"px,0,0)";
+			  solid(activeIndex);
 		    }
 		  }
-		  actionBgCircleBottom();
 		  activeTarget = null;
 		  moveX = null;
 		  stX = null;
-		  //console.log(activeIndex);
 		  slideItems[activeIndex].addEventListener(TOUCH_START,mouseDown,false);
 		}
-		function addAnimation(){
-		  for(var i=0;i<slideLength;i++){
-		    slideItems[i].style.transition = "transform 0.6s ease";
-			spanCircles[i].style.transition = "background 0.6s ease";
+		function addAnimation(a){
+		  //console.log(a);
+		  for(var i=0;i<a.length;i++){
+		    slideItems[a[i]].style.transition = "transform 0.6s ease";
+			spanCircles[a[i]].style.transition = "background 0.6s ease";
 		  }
 		}
 		function removeAnimation(){
@@ -244,10 +310,13 @@
 		}
 		slidePager[0].addEventListener("click",function(e){
 		  if(e.target.classList.contains("spanCircle")){
-		    //console.log(e.target.attributes[0].value);
-			init(e.target.attributes[0].value,true);
+		    //console.log(e.target.attributes["index"].value);
+			init(e.target.attributes["index"].value,true);
 		  }
 		},false);
+		window.onresize = function () {
+	      init(activeIndex);
+	    }
 	  }
 	}
   });
